@@ -1,6 +1,6 @@
 # imbalanced-traffic-routing
 
-## 2023-10-01T13:21:26.666Z
+## 2023-10-01T13:24:49.898Z
 
 ## Written by Angus Gibbs, Engineering Lead @ HubSpot.The Workflows engine at HubSpot has to handle traffic from millions of workflows every day. Huge traffic spikes and slow response times from our dependencies are a fact of life. In this post, we’ll take a look at how we use Kafka swimlanes to keep Workflows fast and reliable.
 _________________
