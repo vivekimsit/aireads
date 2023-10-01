@@ -1,0 +1,28 @@
+{
+	"name": "reader",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"bin": {
+		"reader": "./dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc && sed -i '' '1s;^;#!/usr/bin/env node\\n;' ./dist/index.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@dqbd/tiktoken": "^1.0.2",
+		"axios": "^1.5.1",
+		"cheerio": "^1.0.0-rc.12",
+		"openai": "^4.11.0"
+	},
+	"devDependencies": {
+		"@clack/prompts": "^0.7.0",
+		"dotenv": "^16.3.1",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.2.2"
+	}
+}
