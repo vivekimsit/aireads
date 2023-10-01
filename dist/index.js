@@ -29,8 +29,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const axios_1 = __importDefault(require("axios"));
+const url_1 = require("url");
 const cheerio = __importStar(require("cheerio"));
 const prompts_1 = require("@clack/prompts");
+const blogStorage_1 = require("./blogStorage");
 const openai = __importStar(require("./openai"));
 const openai_key = process.env.OPENAI_API_KEY ?? "";
 const sanitizeMessage = (message) => message
@@ -50,6 +52,13 @@ const fetchAndSummarize = async (blog) => {
             (0, prompts_1.outro)("Article not found");
             return;
         }
+        const url = new url_1.URL(blog.url);
+        const pathSegments = url.pathname.split("/");
+        const lastSegment = pathSegments[pathSegments.length - 1];
+        const title = lastSegment;
+        const datetime = new Date().toISOString();
+        const content = text;
+        await (0, blogStorage_1.saveBlogToFile)(title, datetime, content);
         // Trim the text to 100 words
         const words = text.split(/\s+/);
         // console.log(`Word count: ${words.length}`);
@@ -73,7 +82,7 @@ const fetchAndSummarize = async (blog) => {
             process.exit(1);
         }
         gptResponseDelay.stop("Complete");
-        (0, prompts_1.outro)(`Successfully committed!`);
+        (0, prompts_1.outro)(`Successfully completed!`);
         // const summary = gptResponse.choices[0]?.text?.trim();
     }
     catch (error) {
