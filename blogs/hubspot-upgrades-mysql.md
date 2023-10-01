@@ -1,6 +1,6 @@
 # hubspot-upgrades-mysql
 
-## 2023-10-01T12:56:12.008Z
+## 2023-10-01T13:17:57.672Z
 
 ## Written by Olga Shestopalova, Data Infra Engineer @ HubSpot.HubSpot runs over a thousand MySQL clusters in each environment, and we were faced with the daunting task of upgrading all of these in a safe, automated manner. We jumped 9 major versions of Vitess, the clustering software we use for MySQL, along the way developing reusable testing tooling and automation to make all future upgrades significantly easier. This time around our upgrade journey took a year, but our estimate for the next upgrade is only a quarter, given all that we have learned and developed. Read on to learn more about our recent upgrade.
 _________________

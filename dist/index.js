@@ -23,14 +23,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
-const axios_1 = __importDefault(require("axios"));
-const url_1 = require("url");
-const cheerio = __importStar(require("cheerio"));
 const prompts_1 = require("@clack/prompts");
 const blogStorage_1 = require("./blogStorage");
 const openai = __importStar(require("./openai"));
@@ -44,25 +38,25 @@ const fetchAndSummarize = async (blog) => {
         (0, prompts_1.intro)(" Reader 📖 ");
         const loadingText = (0, prompts_1.spinner)();
         loadingText.start("Loading content");
-        const { data } = await axios_1.default.get(blog.url);
+        const text = await (0, blogStorage_1.getBlogContent)(blog);
         loadingText.stop("Loading done");
-        const $ = cheerio.load(data);
-        let text = $(blog.querySelector).text().trim();
-        if (!text) {
-            (0, prompts_1.outro)("Article not found");
-            return;
-        }
-        const url = new url_1.URL(blog.url);
-        const pathSegments = url.pathname.split("/");
-        const lastSegment = pathSegments[pathSegments.length - 1];
-        const title = lastSegment;
-        const datetime = new Date().toISOString();
-        const content = text;
-        await (0, blogStorage_1.saveBlogToFile)(title, datetime, content);
+        // const $ = cheerio.load(data);
+        // let text = $(blog.querySelector).text().trim();
+        // if (!text) {
+        // 	outro("Article not found");
+        // 	return;
+        // }
+        // const url = new URL(blog.url);
+        // const pathSegments = url.pathname.split("/");
+        // const lastSegment = pathSegments[pathSegments.length - 1];
+        // const title = lastSegment;
+        // const datetime = new Date().toISOString();
+        // const content = text;
+        // await saveBlogToFile(title, datetime, content);
         // Trim the text to 100 words
         const words = text.split(/\s+/);
         // console.log(`Word count: ${words.length}`);
-        text = words.slice(0, 200).join(" ");
+        const trimmedText = words.slice(0, 200).join(" ");
         // console.log(`Summary: ${text}`);
         const gptResponseDelay = (0, prompts_1.spinner)();
         gptResponseDelay.start("Fetching summary from GPT...");
@@ -70,7 +64,7 @@ const fetchAndSummarize = async (blog) => {
             // Fetch the summary from GPT-3
             const completion = await openai.generateSummary({
                 apiKey: openai_key,
-                article: text,
+                article: trimmedText,
             });
             const summary = completion.choices
                 .filter((choice) => choice.message?.content)
@@ -91,7 +85,7 @@ const fetchAndSummarize = async (blog) => {
 };
 const blogs = {
     hubspot: {
-        url: "https://product.hubspot.com/blog/hubspot-upgrades-mysql",
+        url: "https://product.hubspot.com/blog/imbalanced-traffic-routing",
         querySelector: "#hs_cos_wrapper_post_body",
     },
 };

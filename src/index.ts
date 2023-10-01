@@ -3,7 +3,7 @@ import axios from "axios";
 import { URL } from "url";
 import * as cheerio from "cheerio";
 import { intro, outro, spinner } from "@clack/prompts";
-import { saveBlogToFile } from "./blogStorage";
+import { saveBlogToFile, getBlogContent } from "./blogStorage";
 import * as openai from "./openai";
 
 interface BlogConfig {
@@ -36,30 +36,30 @@ const fetchAndSummarize = async (blog: BlogConfig) => {
 		const loadingText = spinner();
 
 		loadingText.start("Loading content");
-		const { data } = await axios.get(blog.url);
+		const text = await getBlogContent(blog);
 		loadingText.stop("Loading done");
 
-		const $ = cheerio.load(data);
-		let text = $(blog.querySelector).text().trim();
+		// const $ = cheerio.load(data);
+		// let text = $(blog.querySelector).text().trim();
 
-		if (!text) {
-			outro("Article not found");
-			return;
-		}
+		// if (!text) {
+		// 	outro("Article not found");
+		// 	return;
+		// }
 
-		const url = new URL(blog.url);
-		const pathSegments = url.pathname.split("/");
-		const lastSegment = pathSegments[pathSegments.length - 1];
-		const title = lastSegment;
-		const datetime = new Date().toISOString();
-		const content = text;
+		// const url = new URL(blog.url);
+		// const pathSegments = url.pathname.split("/");
+		// const lastSegment = pathSegments[pathSegments.length - 1];
+		// const title = lastSegment;
+		// const datetime = new Date().toISOString();
+		// const content = text;
 
-		await saveBlogToFile(title, datetime, content);
+		// await saveBlogToFile(title, datetime, content);
 
 		// Trim the text to 100 words
 		const words = text.split(/\s+/);
 		// console.log(`Word count: ${words.length}`);
-		text = words.slice(0, 200).join(" ");
+		const trimmedText = words.slice(0, 200).join(" ");
 		// console.log(`Summary: ${text}`);
 
 		const gptResponseDelay = spinner();
@@ -69,7 +69,7 @@ const fetchAndSummarize = async (blog: BlogConfig) => {
 			// Fetch the summary from GPT-3
 			const completion: GPTResponse = await openai.generateSummary({
 				apiKey: openai_key,
-				article: text,
+				article: trimmedText,
 			});
 			const summary = completion.choices
 				.filter((choice) => choice.message?.content)
@@ -89,7 +89,7 @@ const fetchAndSummarize = async (blog: BlogConfig) => {
 
 const blogs = {
 	hubspot: {
-		url: "https://product.hubspot.com/blog/hubspot-upgrades-mysql",
+		url: "https://product.hubspot.com/blog/imbalanced-traffic-routing",
 		querySelector: "#hs_cos_wrapper_post_body",
 	},
 };
