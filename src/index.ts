@@ -4,8 +4,10 @@ import * as cheerio from "cheerio";
 import { intro, outro, spinner } from "@clack/prompts";
 import * as openai from "./openai";
 
-// For calling GPT-3 API
-// import { createApi } from "openai";
+interface BlogConfig {
+	url: string;
+	querySelector: string;
+}
 
 const openai_key = process.env.OPENAI_API_KEY ?? "";
 
@@ -25,18 +27,18 @@ const sanitizeMessage = (message: string) =>
 		.replace(/[\n\r]/g, "")
 		.replace(/(\w)\.$/, "$1");
 
-const fetchAndSummarize = async (url: string, elementId: string) => {
+const fetchAndSummarize = async (blog: BlogConfig) => {
 	try {
 		intro(" Reader 📖 ");
 
 		const loadingText = spinner();
 
 		loadingText.start("Loading content");
-		const { data } = await axios.get(url);
+		const { data } = await axios.get(blog.url);
 		loadingText.stop("Loading done");
 
 		const $ = cheerio.load(data);
-		let text = $(`#${elementId}`).text();
+		let text = $(blog.querySelector).text().trim();
 
 		if (!text) {
 			outro("Article not found");
@@ -45,9 +47,9 @@ const fetchAndSummarize = async (url: string, elementId: string) => {
 
 		// Trim the text to 100 words
 		const words = text.split(/\s+/);
-		console.log(`Word count: ${words.length}`);
+		// console.log(`Word count: ${words.length}`);
 		text = words.slice(0, 200).join(" ");
-		console.log(`Summary: ${text}`);
+		// console.log(`Summary: ${text}`);
 
 		const gptResponseDelay = spinner();
 		gptResponseDelay.start("Fetching summary from GPT...");
@@ -67,14 +69,18 @@ const fetchAndSummarize = async (url: string, elementId: string) => {
 			process.exit(1);
 		}
 		gptResponseDelay.stop("Complete");
-		outro(`Successfully committed!`);
+		outro(`Successfully completed!`);
 		// const summary = gptResponse.choices[0]?.text?.trim();
 	} catch (error) {
 		console.log(error);
 	}
 };
 
-fetchAndSummarize(
-	"https://product.hubspot.com/blog/hubspot-upgrades-mysql",
-	"hs_cos_wrapper_post_body"
-);
+const blogs = {
+	hubspot: {
+		url: "https://product.hubspot.com/blog/hubspot-upgrades-mysql",
+		querySelector: "#hs_cos_wrapper_post_body",
+	},
+};
+
+fetchAndSummarize(blogs.hubspot);

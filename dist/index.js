@@ -32,31 +32,29 @@ const axios_1 = __importDefault(require("axios"));
 const cheerio = __importStar(require("cheerio"));
 const prompts_1 = require("@clack/prompts");
 const openai = __importStar(require("./openai"));
-// For calling GPT-3 API
-// import { createApi } from "openai";
 const openai_key = process.env.OPENAI_API_KEY ?? "";
 const sanitizeMessage = (message) => message
     .trim()
     .replace(/[\n\r]/g, "")
     .replace(/(\w)\.$/, "$1");
-const fetchAndSummarize = async (url, elementId) => {
+const fetchAndSummarize = async (blog) => {
     try {
         (0, prompts_1.intro)(" Reader 📖 ");
         const loadingText = (0, prompts_1.spinner)();
         loadingText.start("Loading content");
-        const { data } = await axios_1.default.get(url);
+        const { data } = await axios_1.default.get(blog.url);
         loadingText.stop("Loading done");
         const $ = cheerio.load(data);
-        let text = $(`#${elementId}`).text();
+        let text = $(blog.querySelector).text().trim();
         if (!text) {
             (0, prompts_1.outro)("Article not found");
             return;
         }
         // Trim the text to 100 words
         const words = text.split(/\s+/);
-        console.log(`Word count: ${words.length}`);
+        // console.log(`Word count: ${words.length}`);
         text = words.slice(0, 200).join(" ");
-        console.log(`Summary: ${text}`);
+        // console.log(`Summary: ${text}`);
         const gptResponseDelay = (0, prompts_1.spinner)();
         gptResponseDelay.start("Fetching summary from GPT...");
         try {
@@ -82,4 +80,10 @@ const fetchAndSummarize = async (url, elementId) => {
         console.log(error);
     }
 };
-fetchAndSummarize("https://product.hubspot.com/blog/hubspot-upgrades-mysql", "hs_cos_wrapper_post_body");
+const blogs = {
+    hubspot: {
+        url: "https://product.hubspot.com/blog/hubspot-upgrades-mysql",
+        querySelector: "#hs_cos_wrapper_post_body",
+    },
+};
+fetchAndSummarize(blogs.hubspot);
