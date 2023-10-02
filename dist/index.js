@@ -109,6 +109,11 @@ const blogsConfig = {
         querySelector: "main article .default-post-content",
         querySelectorAll: ".posts-list.home-post-list li article h2",
     },
+    slack: {
+        url: "https://slack.engineering",
+        querySelector: "loop-container loop-container--grid",
+        querySelectorAll: ".loop-container.loop-container--grid article",
+    },
 };
 const getBlogList = async () => {
     return Object.keys(blogsConfig);
