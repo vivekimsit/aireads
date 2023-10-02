@@ -58,8 +58,10 @@ const fetchAndSummarize = async () => {
     loadingText.start("Loading content");
 
     const text = await getBlogContent({
+      name: blogSelection as string,
       url: selected as string,
-      querySelector: "",
+      // @ts-ignore
+      querySelector: blogsConfig[blogSelection].querySelector,
     });
 
     loadingText.stop("Loading done");
@@ -103,7 +105,7 @@ const blogsConfig = {
   },
   spotify: {
     url: "https://engineering.atspotify.com",
-    querySelector: "#hs_cos_wrapper_post_body",
+    querySelector: "main article .default-post-content",
     querySelectorAll: ".posts-list.home-post-list li article h2",
   },
 };
@@ -120,7 +122,6 @@ const getArticleList = async (blogName: string): Promise<string[]> => {
 
   const blogLinks: string[] = [];
 
-  console.log(">>>>>>>", blog, blogName);
   $(blog.querySelectorAll).each((i, element) => {
     const link = $(element).find("a").attr("href");
     if (link) {

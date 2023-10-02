@@ -7,6 +7,7 @@ import * as cheerio from "cheerio";
 const blogsDir = join(process.cwd(), "blogs");
 
 interface BlogConfig {
+  name: string;
   url: string;
   querySelector: string;
 }
@@ -17,11 +18,16 @@ fs.mkdir(blogsDir).catch((err) => {
 });
 
 export const saveBlogToFile = async (
+  name: string,
   title: string,
   datetime: string,
   content: string
 ) => {
-  const filePath = join(blogsDir, `${title}.md`);
+  fs.mkdir(join(blogsDir, name)).catch((err) => {
+    if (err.code !== "EEXIST") throw err;
+  });
+
+  const filePath = join(blogsDir, name, `${title}.md`);
   const fileContent = `# ${title}\n\n## ${datetime}\n\n## ${content}\n`;
   await fs.writeFile(filePath, fileContent);
 };
@@ -41,10 +47,11 @@ const ifBlogExists = async (filePath: string): Promise<boolean> => {
 };
 
 export const getBlogContent = async (blog: BlogConfig) => {
+  const name = blog.name;
   const url = new URL(blog.url);
-  const pathSegments = url.pathname.split("/");
+  const pathSegments = url.pathname.split("/").filter(Boolean);
   const lastSegment = pathSegments.pop() ?? "";
-  const filePath = `./blogs/${lastSegment}.txt`;
+  const filePath = `./blogs/${name}/${lastSegment}.txt`;
 
   const fileExists = await ifBlogExists(filePath);
 
@@ -52,6 +59,7 @@ export const getBlogContent = async (blog: BlogConfig) => {
     const content = await fs.readFile(filePath, "utf8");
     return content;
   } else {
+    console.log("Article not found in local, fetching from remote");
     const { data } = await axios.get(blog.url);
     const $ = cheerio.load(data);
     let text = $(blog.querySelector).text().trim();
@@ -60,7 +68,9 @@ export const getBlogContent = async (blog: BlogConfig) => {
     const datetime = new Date().toISOString();
     const content = text;
 
-    await saveBlogToFile(title, datetime, content);
+    console.log(blog.querySelector);
+    console.log(content);
+    await saveBlogToFile(name, title, datetime, content);
     return text;
   }
 };

@@ -63,8 +63,10 @@ const fetchAndSummarize = async () => {
         const loadingText = (0, prompts_1.spinner)();
         loadingText.start("Loading content");
         const text = await (0, blogStorage_1.getBlogContent)({
+            name: blogSelection,
             url: selected,
-            querySelector: "",
+            // @ts-ignore
+            querySelector: blogsConfig[blogSelection].querySelector,
         });
         loadingText.stop("Loading done");
         // Trim the text to 100 words
@@ -104,7 +106,7 @@ const blogsConfig = {
     },
     spotify: {
         url: "https://engineering.atspotify.com",
-        querySelector: "#hs_cos_wrapper_post_body",
+        querySelector: "main article .default-post-content",
         querySelectorAll: ".posts-list.home-post-list li article h2",
     },
 };
@@ -117,7 +119,6 @@ const getArticleList = async (blogName) => {
     const { data } = await axios_1.default.get(blog.url);
     const $ = cheerio.load(data);
     const blogLinks = [];
-    console.log(">>>>>>>", blog, blogName);
     $(blog.querySelectorAll).each((i, element) => {
         const link = $(element).find("a").attr("href");
         if (link) {
