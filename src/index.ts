@@ -29,11 +29,21 @@ const sanitizeMessage = (message: string) =>
     .replace(/[\n\r]/g, "")
     .replace(/(\w)\.$/, "$1");
 
-const fetchAndSummarize = async (blog: BlogConfig) => {
+const fetchAndSummarize = async () => {
   try {
     intro(" Reader 📖 ");
 
-    const blogLinks = await getBlogList("https://product.hubspot.com/blog");
+    const blogNames = await getBlogList();
+    const blogSelection = await select({
+      message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
+      options: blogNames.map((value) => ({ label: value, value })),
+    });
+    if (isCancel(blogSelection)) {
+      outro("Cancelled");
+      return;
+    }
+
+    const blogLinks = await getArticleList(blogSelection as string);
     const selected = await select({
       message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
       options: blogLinks.map((value) => ({ label: value, value })),
@@ -49,7 +59,7 @@ const fetchAndSummarize = async (blog: BlogConfig) => {
 
     const text = await getBlogContent({
       url: selected as string,
-      querySelector: blog.querySelector,
+      querySelector: "",
     });
 
     loadingText.stop("Loading done");
@@ -84,22 +94,34 @@ const fetchAndSummarize = async (blog: BlogConfig) => {
   }
 };
 
-const blogs = {
+const blogsConfig = {
   hubspot: {
-    url: "https://product.hubspot.com/blog/imbalanced-traffic-routing",
+    url: "https://product.hubspot.com/blog",
     querySelector: "#hs_cos_wrapper_post_body",
+    querySelectorAll:
+      ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
+  },
+  spotify: {
+    url: "https://engineering.atspotify.com",
+    querySelector: "#hs_cos_wrapper_post_body",
+    querySelectorAll: ".posts-list.home-post-list li article h2",
   },
 };
 
-const getBlogList = async (url: string): Promise<string[]> => {
-  const { data } = await axios.get(url);
+const getBlogList = async (): Promise<string[]> => {
+  return Object.keys(blogsConfig);
+};
+
+const getArticleList = async (blogName: string): Promise<string[]> => {
+  // @ts-ignore
+  const blog = blogsConfig[blogName];
+  const { data } = await axios.get(blog.url);
   const $ = cheerio.load(data);
 
   const blogLinks: string[] = [];
 
-  $(
-    ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2"
-  ).each((i, element) => {
+  console.log(">>>>>>>", blog, blogName);
+  $(blog.querySelectorAll).each((i, element) => {
     const link = $(element).find("a").attr("href");
     if (link) {
       blogLinks.push(link);
@@ -109,5 +131,4 @@ const getBlogList = async (url: string): Promise<string[]> => {
   return blogLinks;
 };
 
-fetchAndSummarize(blogs.hubspot);
-// getBlogList("https://product.hubspot.com/blog");
+fetchAndSummarize();

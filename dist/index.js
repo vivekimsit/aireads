@@ -39,10 +39,19 @@ const sanitizeMessage = (message) => message
     .trim()
     .replace(/[\n\r]/g, "")
     .replace(/(\w)\.$/, "$1");
-const fetchAndSummarize = async (blog) => {
+const fetchAndSummarize = async () => {
     try {
         (0, prompts_1.intro)(" Reader 📖 ");
-        const blogLinks = await getBlogList("https://product.hubspot.com/blog");
+        const blogNames = await getBlogList();
+        const blogSelection = await (0, prompts_1.select)({
+            message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
+            options: blogNames.map((value) => ({ label: value, value })),
+        });
+        if ((0, prompts_1.isCancel)(blogSelection)) {
+            (0, prompts_1.outro)("Cancelled");
+            return;
+        }
+        const blogLinks = await getArticleList(blogSelection);
         const selected = await (0, prompts_1.select)({
             message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
             options: blogLinks.map((value) => ({ label: value, value })),
@@ -55,7 +64,7 @@ const fetchAndSummarize = async (blog) => {
         loadingText.start("Loading content");
         const text = await (0, blogStorage_1.getBlogContent)({
             url: selected,
-            querySelector: blog.querySelector,
+            querySelector: "",
         });
         loadingText.stop("Loading done");
         // Trim the text to 100 words
@@ -87,17 +96,29 @@ const fetchAndSummarize = async (blog) => {
         console.log(error);
     }
 };
-const blogs = {
+const blogsConfig = {
     hubspot: {
-        url: "https://product.hubspot.com/blog/imbalanced-traffic-routing",
+        url: "https://product.hubspot.com/blog",
         querySelector: "#hs_cos_wrapper_post_body",
+        querySelectorAll: ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
+    },
+    spotify: {
+        url: "https://engineering.atspotify.com",
+        querySelector: "#hs_cos_wrapper_post_body",
+        querySelectorAll: ".posts-list.home-post-list li article h2",
     },
 };
-const getBlogList = async (url) => {
-    const { data } = await axios_1.default.get(url);
+const getBlogList = async () => {
+    return Object.keys(blogsConfig);
+};
+const getArticleList = async (blogName) => {
+    // @ts-ignore
+    const blog = blogsConfig[blogName];
+    const { data } = await axios_1.default.get(blog.url);
     const $ = cheerio.load(data);
     const blogLinks = [];
-    $(".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2").each((i, element) => {
+    console.log(">>>>>>>", blog, blogName);
+    $(blog.querySelectorAll).each((i, element) => {
         const link = $(element).find("a").attr("href");
         if (link) {
             blogLinks.push(link);
@@ -105,5 +126,4 @@ const getBlogList = async (url) => {
     });
     return blogLinks;
 };
-fetchAndSummarize(blogs.hubspot);
-// getBlogList("https://product.hubspot.com/blog");
+fetchAndSummarize();
