@@ -34,6 +34,10 @@ const openai = __importStar(require("./openai"));
 const cheerio = __importStar(require("cheerio"));
 const prompts_1 = require("@clack/prompts");
 const blogStorage_1 = require("./blogStorage");
+const blogAdapter_1 = require("./adapters/blogAdapter");
+const fetchBlogList_1 = require("./core/useCases/fetchBlogList");
+const blogPort = new blogAdapter_1.BlogAdapter();
+const getBlogListUseCase = new fetchBlogList_1.GetBlogListUseCase(blogPort);
 const openai_key = process.env.OPENAI_API_KEY ?? "";
 const sanitizeMessage = (message) => message
     .trim()
@@ -42,10 +46,11 @@ const sanitizeMessage = (message) => message
 const fetchAndSummarize = async () => {
     try {
         (0, prompts_1.intro)(" Reader 📖 ");
-        const blogNames = await getBlogList();
+        const blogList = await getBlogListUseCase.execute();
+        // const blogNames = await getBlogList();
         const blogSelection = await (0, prompts_1.select)({
             message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
-            options: blogNames.map((value) => ({ label: value, value })),
+            options: blogList.map((value) => ({ label: value, value })),
         });
         if ((0, prompts_1.isCancel)(blogSelection)) {
             (0, prompts_1.outro)("Cancelled");

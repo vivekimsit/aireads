@@ -5,6 +5,11 @@ import * as openai from "./openai";
 import * as cheerio from "cheerio";
 import { intro, outro, spinner, select, isCancel } from "@clack/prompts";
 import { getBlogContent } from "./blogStorage";
+import { BlogAdapter } from "./adapters/blogAdapter";
+import { GetBlogListUseCase } from "./core/useCases/fetchBlogList";
+
+const blogPort = new BlogAdapter();
+const getBlogListUseCase = new GetBlogListUseCase(blogPort);
 
 interface BlogConfig {
   url: string;
@@ -33,10 +38,11 @@ const fetchAndSummarize = async () => {
   try {
     intro(" Reader 📖 ");
 
-    const blogNames = await getBlogList();
+    const blogList = await getBlogListUseCase.execute();
+    // const blogNames = await getBlogList();
     const blogSelection = await select({
       message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
-      options: blogNames.map((value) => ({ label: value, value })),
+      options: blogList.map((value) => ({ label: value, value })),
     });
     if (isCancel(blogSelection)) {
       outro("Cancelled");
