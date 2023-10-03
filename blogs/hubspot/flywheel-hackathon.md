@@ -1,6 +1,6 @@
 # flywheel-hackathon
 
-## 2023-10-02T14:11:22.741Z
+## 2023-10-03T12:42:35.435Z
 
 ## When new technologies are introduced, it takes experimentation, collaboration and problem-solving to determine how best to apply it to your customer’s challenges. Jo Crossick, Senior Engineering Manager, recently hosted an AI Hackathon with the HubSpot Flywheel Technology team to explore how ChatGPT may be able to be used as a helpful tool when solving for HubSpot’s internal use cases. Learn more from Jo below!
 _________

@@ -5,6 +5,7 @@ import { join } from "path";
 import { BlogPort } from "../core/ports/blogPort";
 import { BlogConfig } from "../core/models/blogConfig";
 import { ILogger as LoggingPort } from "../core/ports/loggingPort";
+import { ConfigPort } from "../core/ports/configPort";
 
 const blogConfigs: BlogConfig[] = [
   {
@@ -18,11 +19,10 @@ const blogConfigs: BlogConfig[] = [
 ];
 
 export class BlogAdapter implements BlogPort {
-  private loggingPort: LoggingPort;
-
-  constructor(loggingPort: LoggingPort) {
-    this.loggingPort = loggingPort;
-  }
+  constructor(
+    private loggingPort: LoggingPort,
+    private configPort: ConfigPort
+  ) {}
 
   async fetchArticles(
     url: string,
@@ -54,15 +54,18 @@ export class BlogAdapter implements BlogPort {
   }
 
   async getBlogList(): Promise<BlogConfig[]> {
-    return blogConfigs.map((blog) => blog);
+    return this.configPort.getAllConfigs();
   }
 
-  async fetchArticleDetail(config: BlogConfig): Promise<string> {
+  async fetchArticleDetail(
+    config: BlogConfig,
+    articleUrl: string
+  ): Promise<string> {
     const name = config.name;
-    const url = new URL(config.url);
+    const url = new URL(articleUrl);
     const pathSegments = url.pathname.split("/").filter(Boolean);
     const lastSegment = pathSegments.pop() ?? "";
-    const filePath = join("blogs", name, `${lastSegment}.txt`);
+    const filePath = join("blogs", name, `${lastSegment}.md`);
 
     try {
       if (await this.ifBlogExists(filePath)) {
@@ -72,7 +75,7 @@ export class BlogAdapter implements BlogPort {
         this.loggingPort.info(
           "Article not found in local, fetching from remote"
         );
-        const { data } = await axios.get(config.url);
+        const { data } = await axios.get(articleUrl);
         const $ = cheerio.load(data);
         const text = $(config.articleDetailSelector).text().trim();
 
@@ -106,7 +109,7 @@ export class BlogAdapter implements BlogPort {
     datetime: string,
     content: string
   ): Promise<void> {
-    const filePath = join("blogs", name, `${title}.txt`);
+    const filePath = join("blogs", name, `${title}.md`);
     const fileContent = `# ${title}\n\n## ${datetime}\n\n## ${content}`;
     await fs.writeFile(filePath, fileContent, "utf8");
   }

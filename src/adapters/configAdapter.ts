@@ -13,6 +13,18 @@ export class ConfigAdapter implements ConfigPort {
           ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
         articleDetailSelector: "#hs_cos_wrapper_post_body",
       },
+      {
+        name: "Spotify",
+        url: "https://engineering.atspotify.com",
+        articleListSelector: ".posts-list.home-post-list li article h2",
+        articleDetailSelector: "main article .default-post-content",
+      },
+      {
+        name: "Slack",
+        url: "https://slack.engineering",
+        articleDetailSelector: "main article .entry__content.s-wysiwyg",
+        articleListSelector: ".loop-container.loop-container--grid article",
+      },
     ];
   }
 

@@ -1,8 +1,6 @@
 import "dotenv/config";
-import axios from "axios";
 import { dim } from "kolorist";
 import * as openai from "./openai";
-import * as cheerio from "cheerio";
 import { intro, outro, spinner, select, isCancel } from "@clack/prompts";
 import { getBlogContent } from "./blogStorage";
 
@@ -12,10 +10,12 @@ import { LoggingAdapter } from "./adapters/loggingAdapter";
 
 import { GetBlogListUseCase } from "./core/useCases/fetchBlogList";
 import { FetchArticlesUseCase } from "./core/useCases/fetchArticlesUseCase";
+import { FetchBlogConfigUseCase } from "./core/useCases/fetchBlogConfigUseCase";
+import { FetchArticleDetailAndSummarizeUseCase } from "./core/useCases/fetchArticleDetailAndSummarizeUseCase";
 
 const loggingAdapter = new LoggingAdapter();
-const blogPort = new BlogAdapter(loggingAdapter);
 const configAdapter = new ConfigAdapter();
+const blogPort = new BlogAdapter(loggingAdapter, configAdapter);
 
 const getBlogListUseCase = new GetBlogListUseCase(blogPort);
 const fetchArticlesUseCase = new FetchArticlesUseCase(
@@ -23,11 +23,9 @@ const fetchArticlesUseCase = new FetchArticlesUseCase(
   configAdapter,
   loggingAdapter
 );
-
-interface BlogConfig {
-  url: string;
-  querySelector: string;
-}
+const fetchBlogConfigUseCase = new FetchBlogConfigUseCase(configAdapter);
+const fetchArticleDetailAndSummarizeUseCase =
+  new FetchArticleDetailAndSummarizeUseCase(blogPort, loggingAdapter);
 
 const openai_key = process.env.OPENAI_API_KEY ?? "";
 
@@ -69,12 +67,12 @@ const fetchAndSummarize = async () => {
       selectedBlogName as string
     );
     // const blogLinks = await getArticleList(blogSelection as string);
-    const selected = await select({
+    const selectedArticle = await select({
       message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
       options: articles.map((value) => ({ label: value, value })),
     });
 
-    if (isCancel(selected)) {
+    if (isCancel(selectedArticle)) {
       outro("Cancelled");
       return;
     }
@@ -82,19 +80,28 @@ const fetchAndSummarize = async () => {
     const loadingText = spinner();
     loadingText.start("Loading content");
 
-    const text = await getBlogContent({
-      name: selectedBlogName as string,
-      url: selected as string,
-      // @ts-ignore
-      querySelector: blogsConfig[blogSelection].querySelector,
-    });
+    const blogConfig = await fetchBlogConfigUseCase.execute(
+      selectedBlogName as string
+    );
+    if (blogConfig) {
+      const summary = await fetchArticleDetailAndSummarizeUseCase.execute(
+        blogConfig,
+        selectedArticle as string
+      );
+    }
+    // const text = await getBlogContent({
+    //   name: selectedBlogName as string,
+    //   url: selected as string,
+    //   // @ts-ignore
+    //   querySelector: blogsConfig[blogSelection].querySelector,
+    // });
 
     loadingText.stop("Loading done");
 
     // Trim the text to 100 words
-    const words = text.split(/\s+/);
+    // const words = text.split(/\s+/);
     // console.log(`Word count: ${words.length}`);
-    const trimmedText = words.slice(0, 200).join(" ");
+    // const trimmedText = words.slice(0, 200).join(" ");
     // console.log(`Summary: ${text}`);
 
     const gptResponseDelay = spinner();
@@ -102,17 +109,17 @@ const fetchAndSummarize = async () => {
 
     try {
       // Fetch the summary from GPT-3
-      const completion: GPTResponse = await openai.generateSummary({
-        apiKey: openai_key,
-        article: trimmedText,
-      });
-      const summary = completion.choices
-        .filter((choice) => choice.message?.content)
-        .map((choice) => sanitizeMessage(choice.message!.content));
-      console.log(summary);
+      //   const completion: GPTResponse = await openai.generateSummary({
+      //     apiKey: openai_key,
+      //     article: trimmedText,
+      //   });
+      //   const summary = completion.choices
+      //     .filter((choice) => choice.message?.content)
+      //     .map((choice) => sanitizeMessage(choice.message!.content));
+      //   console.log(summary);
     } catch (error: any) {
-      outro(`🛑 ${error.message}`);
-      process.exit(1);
+      //   outro(`🛑 ${error.message}`);
+      //   process.exit(1);
     }
     gptResponseDelay.stop("Complete");
     outro(`Successfully completed!`);
@@ -121,45 +128,23 @@ const fetchAndSummarize = async () => {
   }
 };
 
-const blogsConfig = {
-  hubspot: {
-    url: "https://product.hubspot.com/blog",
-    querySelector: "#hs_cos_wrapper_post_body",
-    querySelectorAll:
-      ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
-  },
-  spotify: {
-    url: "https://engineering.atspotify.com",
-    querySelector: "main article .default-post-content",
-    querySelectorAll: ".posts-list.home-post-list li article h2",
-  },
-  slack: {
-    url: "https://slack.engineering",
-    querySelector: "loop-container loop-container--grid",
-    querySelectorAll: ".loop-container.loop-container--grid article",
-  },
-};
-
-const getBlogList = async (): Promise<string[]> => {
-  return Object.keys(blogsConfig);
-};
-
-const getArticleList = async (blogName: string): Promise<string[]> => {
-  // @ts-ignore
-  const blog = blogsConfig[blogName];
-  const { data } = await axios.get(blog.url);
-  const $ = cheerio.load(data);
-
-  const blogLinks: string[] = [];
-
-  $(blog.querySelectorAll).each((i, element) => {
-    const link = $(element).find("a").attr("href");
-    if (link) {
-      blogLinks.push(link);
-    }
-  });
-
-  return blogLinks;
-};
+// const blogsConfig = {
+//   hubspot: {
+//     url: "https://product.hubspot.com/blog",
+//     querySelector: "#hs_cos_wrapper_post_body",
+//     querySelectorAll:
+//       ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
+//   },
+//   spotify: {
+//     url: "https://engineering.atspotify.com",
+//     querySelector: "main article .default-post-content",
+//     querySelectorAll: ".posts-list.home-post-list li article h2",
+//   },
+//   slack: {
+//     url: "https://slack.engineering",
+//     querySelector: "loop-container loop-container--grid",
+//     querySelectorAll: ".loop-container.loop-container--grid article",
+//   },
+// };
 
 fetchAndSummarize();
