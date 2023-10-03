@@ -35,9 +35,15 @@ const cheerio = __importStar(require("cheerio"));
 const prompts_1 = require("@clack/prompts");
 const blogStorage_1 = require("./blogStorage");
 const blogAdapter_1 = require("./adapters/blogAdapter");
+const configAdapter_1 = require("./adapters/configAdapter");
+const loggingAdapter_1 = require("./adapters/loggingAdapter");
 const fetchBlogList_1 = require("./core/useCases/fetchBlogList");
-const blogPort = new blogAdapter_1.BlogAdapter();
+const fetchArticlesUseCase_1 = require("./core/useCases/fetchArticlesUseCase");
+const loggingAdapter = new loggingAdapter_1.LoggingAdapter();
+const blogPort = new blogAdapter_1.BlogAdapter(loggingAdapter);
+const configAdapter = new configAdapter_1.ConfigAdapter();
 const getBlogListUseCase = new fetchBlogList_1.GetBlogListUseCase(blogPort);
+const fetchArticlesUseCase = new fetchArticlesUseCase_1.FetchArticlesUseCase(blogPort, configAdapter, loggingAdapter);
 const openai_key = process.env.OPENAI_API_KEY ?? "";
 const sanitizeMessage = (message) => message
     .trim()
@@ -48,18 +54,22 @@ const fetchAndSummarize = async () => {
         (0, prompts_1.intro)(" Reader 📖 ");
         const blogList = await getBlogListUseCase.execute();
         // const blogNames = await getBlogList();
-        const blogSelection = await (0, prompts_1.select)({
+        const selectedBlogName = await (0, prompts_1.select)({
             message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
-            options: blogList.map((value) => ({ label: value, value })),
+            options: blogList.map((value) => ({
+                label: value.name,
+                value: value.name,
+            })),
         });
-        if ((0, prompts_1.isCancel)(blogSelection)) {
+        if ((0, prompts_1.isCancel)(selectedBlogName)) {
             (0, prompts_1.outro)("Cancelled");
             return;
         }
-        const blogLinks = await getArticleList(blogSelection);
+        const articles = await fetchArticlesUseCase.execute(selectedBlogName);
+        // const blogLinks = await getArticleList(blogSelection as string);
         const selected = await (0, prompts_1.select)({
             message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
-            options: blogLinks.map((value) => ({ label: value, value })),
+            options: articles.map((value) => ({ label: value, value })),
         });
         if ((0, prompts_1.isCancel)(selected)) {
             (0, prompts_1.outro)("Cancelled");
@@ -68,7 +78,7 @@ const fetchAndSummarize = async () => {
         const loadingText = (0, prompts_1.spinner)();
         loadingText.start("Loading content");
         const text = await (0, blogStorage_1.getBlogContent)({
-            name: blogSelection,
+            name: selectedBlogName,
             url: selected,
             // @ts-ignore
             querySelector: blogsConfig[blogSelection].querySelector,

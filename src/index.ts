@@ -5,11 +5,24 @@ import * as openai from "./openai";
 import * as cheerio from "cheerio";
 import { intro, outro, spinner, select, isCancel } from "@clack/prompts";
 import { getBlogContent } from "./blogStorage";
-import { BlogAdapter } from "./adapters/blogAdapter";
-import { GetBlogListUseCase } from "./core/useCases/fetchBlogList";
 
-const blogPort = new BlogAdapter();
+import { BlogAdapter } from "./adapters/blogAdapter";
+import { ConfigAdapter } from "./adapters/configAdapter";
+import { LoggingAdapter } from "./adapters/loggingAdapter";
+
+import { GetBlogListUseCase } from "./core/useCases/fetchBlogList";
+import { FetchArticlesUseCase } from "./core/useCases/fetchArticlesUseCase";
+
+const loggingAdapter = new LoggingAdapter();
+const blogPort = new BlogAdapter(loggingAdapter);
+const configAdapter = new ConfigAdapter();
+
 const getBlogListUseCase = new GetBlogListUseCase(blogPort);
+const fetchArticlesUseCase = new FetchArticlesUseCase(
+  blogPort,
+  configAdapter,
+  loggingAdapter
+);
 
 interface BlogConfig {
   url: string;
@@ -40,19 +53,25 @@ const fetchAndSummarize = async () => {
 
     const blogList = await getBlogListUseCase.execute();
     // const blogNames = await getBlogList();
-    const blogSelection = await select({
+    const selectedBlogName = await select({
       message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
-      options: blogList.map((value) => ({ label: value, value })),
+      options: blogList.map((value) => ({
+        label: value.name,
+        value: value.name,
+      })),
     });
-    if (isCancel(blogSelection)) {
+    if (isCancel(selectedBlogName)) {
       outro("Cancelled");
       return;
     }
 
-    const blogLinks = await getArticleList(blogSelection as string);
+    const articles = await fetchArticlesUseCase.execute(
+      selectedBlogName as string
+    );
+    // const blogLinks = await getArticleList(blogSelection as string);
     const selected = await select({
       message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
-      options: blogLinks.map((value) => ({ label: value, value })),
+      options: articles.map((value) => ({ label: value, value })),
     });
 
     if (isCancel(selected)) {
@@ -64,7 +83,7 @@ const fetchAndSummarize = async () => {
     loadingText.start("Loading content");
 
     const text = await getBlogContent({
-      name: blogSelection as string,
+      name: selectedBlogName as string,
       url: selected as string,
       // @ts-ignore
       querySelector: blogsConfig[blogSelection].querySelector,

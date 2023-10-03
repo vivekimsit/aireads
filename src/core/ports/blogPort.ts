@@ -1,6 +1,8 @@
+import { BlogConfig } from "../models/blogConfig";
+
 export interface BlogPort {
-  getBlogList(): Promise<string[]>;
-  fetchArticles(blogName: string): Promise<string[]>;
-  fetchArticleDetail(blogName: string, articleName: string): Promise<string>;
+  getBlogList(): Promise<BlogConfig[]>; // Returns full config now
+  fetchArticles(url: string, articleListSelector: string): Promise<string[]>;
+  fetchArticleDetail(config: BlogConfig): Promise<string>;
   fetchArticleSummary(text: string): Promise<string>;
 }
