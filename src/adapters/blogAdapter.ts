@@ -7,17 +7,6 @@ import { BlogConfig } from "../core/models/blogConfig";
 import { ILogger as LoggingPort } from "../core/ports/loggingPort";
 import { ConfigPort } from "../core/ports/configPort";
 
-const blogConfigs: BlogConfig[] = [
-  {
-    name: "HubSpot",
-    url: "https://hubspot.com/blog",
-    articleListSelector:
-      ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
-    articleDetailSelector: "#hs_cos_wrapper_post_body",
-  },
-  // add more here
-];
-
 export class BlogAdapter implements BlogPort {
   constructor(
     private loggingPort: LoggingPort,

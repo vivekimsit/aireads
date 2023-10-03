@@ -2,7 +2,6 @@ import "dotenv/config";
 import { dim } from "kolorist";
 import * as openai from "./openai";
 import { intro, outro, spinner, select, isCancel } from "@clack/prompts";
-import { getBlogContent } from "./blogStorage";
 
 import { BlogAdapter } from "./adapters/blogAdapter";
 import { ConfigAdapter } from "./adapters/configAdapter";
@@ -127,24 +126,5 @@ const fetchAndSummarize = async () => {
     console.log(error);
   }
 };
-
-// const blogsConfig = {
-//   hubspot: {
-//     url: "https://product.hubspot.com/blog",
-//     querySelector: "#hs_cos_wrapper_post_body",
-//     querySelectorAll:
-//       ".blog-index.blog-section .blog-index__post-list.blog-index__post-list--top-latest.blog-index__post-list--with-featured .blog-index__post-content h2",
-//   },
-//   spotify: {
-//     url: "https://engineering.atspotify.com",
-//     querySelector: "main article .default-post-content",
-//     querySelectorAll: ".posts-list.home-post-list li article h2",
-//   },
-//   slack: {
-//     url: "https://slack.engineering",
-//     querySelector: "loop-container loop-container--grid",
-//     querySelectorAll: ".loop-container.loop-container--grid article",
-//   },
-// };
 
 fetchAndSummarize();
