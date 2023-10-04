@@ -20,20 +20,6 @@ const getBlogListUseCase = new fetchBlogList_1.GetBlogListUseCase(blogPort);
 const fetchArticlesUseCase = new fetchArticlesUseCase_1.FetchArticlesUseCase(blogPort, configAdapter, loggingAdapter);
 const fetchBlogConfigUseCase = new fetchBlogConfigUseCase_1.FetchBlogConfigUseCase(configAdapter);
 const fetchArticleDetailAndSummarizeUseCase = new fetchArticleDetailAndSummarizeUseCase_1.FetchArticleDetailAndSummarizeUseCase(blogPort, loggingAdapter);
-// type GPTResponse = {
-//   choices: {
-//     index: number;
-//     message: {
-//       content: string;
-//     };
-//     finish_reason: string;
-//   }[];
-// };
-// const sanitizeMessage = (message: string) =>
-//   message
-//     .trim()
-//     .replace(/[\n\r]/g, "")
-//     .replace(/(\w)\.$/, "$1");
 const run = async () => {
     try {
         (0, prompts_1.intro)(" Reader 📖 ");

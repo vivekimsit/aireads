@@ -31,22 +31,6 @@ const fetchBlogConfigUseCase = new FetchBlogConfigUseCase(configAdapter);
 const fetchArticleDetailAndSummarizeUseCase =
   new FetchArticleDetailAndSummarizeUseCase(blogPort, loggingAdapter);
 
-// type GPTResponse = {
-//   choices: {
-//     index: number;
-//     message: {
-//       content: string;
-//     };
-//     finish_reason: string;
-//   }[];
-// };
-
-// const sanitizeMessage = (message: string) =>
-//   message
-//     .trim()
-//     .replace(/[\n\r]/g, "")
-//     .replace(/(\w)\.$/, "$1");
-
 const run = async () => {
   try {
     intro(" Reader 📖 ");

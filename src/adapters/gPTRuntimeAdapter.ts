@@ -124,12 +124,22 @@ export class GPTAdapter implements GPTRuntimePort {
   }
 
   private systemPrompt(): string {
-    return [
-      "Generate a concise summary of the given article text with the given specifications below:",
-      "- What is the underlying problem?",
-      "- What are the technologies used?",
-      "- What were the learnings?",
-      "Keep the Summary under 1000 words",
-    ].join("\n");
+    const prompt = `
+      Please summarize the given article by addressing the following points:
+
+      1. What was the problem being addressed?
+      - Describe the core challenge or issue presented in the article.
+
+      2. How was the problem solved, and what technologies were utilized in the solution?
+      - Outline the methods or strategies used to address the challenge and specify any technologies or tools that played a key role.
+
+      3. What was the outcome, and what learnings can be drawn from it?
+      - Detail the results achieved and the key insights or takeaways.
+
+      4. Extract and list the unique key terms from the article, avoiding repetitions or closely related terms.
+
+      Ensure each point is addressed in a separate paragraph and keep the summary concise, not exceeding 200 words.
+  `;
+    return prompt;
   }
 }
