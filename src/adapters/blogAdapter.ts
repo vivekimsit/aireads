@@ -6,11 +6,13 @@ import { BlogPort } from "../core/ports/blogPort";
 import { BlogConfig } from "../core/models/blogConfig";
 import { ILogger as LoggingPort } from "../core/ports/loggingPort";
 import { ConfigPort } from "../core/ports/configPort";
+import { GPTRuntimePort } from "../core/ports/gPTRuntimePort";
 
 export class BlogAdapter implements BlogPort {
   constructor(
     private loggingPort: LoggingPort,
-    private configPort: ConfigPort
+    private configPort: ConfigPort,
+    private gptPort: GPTRuntimePort
   ) {}
 
   async fetchArticles(
@@ -38,8 +40,15 @@ export class BlogAdapter implements BlogPort {
     }
   }
 
-  fetchArticleSummary(text: string): Promise<string> {
-    throw new Error("Method not implemented.");
+  async fetchArticleSummary(text: string): Promise<string> {
+    try {
+      return await this.gptPort.summarize(text);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.loggingPort.error(`Error summarizing article: ${error.message}`);
+      }
+    }
+    return "";
   }
 
   async getBlogList(): Promise<BlogConfig[]> {
@@ -58,6 +67,7 @@ export class BlogAdapter implements BlogPort {
 
     try {
       if (await this.ifBlogExists(filePath)) {
+        this.loggingPort.info("Blog found in local cache.");
         const content = await fs.readFile(filePath, "utf8");
         return content;
       } else {
