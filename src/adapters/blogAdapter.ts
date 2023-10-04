@@ -7,6 +7,7 @@ import { BlogConfig } from "../core/models/blogConfig";
 import { ILogger as LoggingPort } from "../core/ports/loggingPort";
 import { ConfigPort } from "../core/ports/configPort";
 import { GPTRuntimePort } from "../core/ports/gPTRuntimePort";
+import { StoragePort } from "../core/ports/storagePort";
 
 export class BlogAdapter implements BlogPort {
   private readonly TIMEOUT = 5000; // 5 seconds
@@ -14,7 +15,8 @@ export class BlogAdapter implements BlogPort {
   constructor(
     private loggingPort: LoggingPort,
     private configPort: ConfigPort,
-    private gptPort: GPTRuntimePort
+    private gptPort: GPTRuntimePort,
+    private storagePort: StoragePort
   ) {}
 
   async fetchArticles(
@@ -54,9 +56,17 @@ export class BlogAdapter implements BlogPort {
     }
   }
 
-  async fetchArticleSummary(text: string): Promise<string> {
+  async fetchArticleSummary(
+    company: string,
+    article: string,
+    text: string
+  ): Promise<string> {
     try {
-      return await this.gptPort.summarize(text);
+      const summary = await this.gptPort.summarize(text);
+      await this.storagePort.save(
+        ["summaries", company, `${article}.md`],
+        summary
+      );
     } catch (error) {
       if (error instanceof Error) {
         this.loggingPort.error(`Error summarizing article: ${error.message}`);

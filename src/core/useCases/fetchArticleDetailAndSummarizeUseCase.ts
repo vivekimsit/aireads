@@ -11,7 +11,14 @@ export class FetchArticleDetailAndSummarizeUseCase {
         blogConfig,
         articleUrl
       );
-      const summary = await this.blogPort.fetchArticleSummary(articleDetail);
+      const url = new URL(articleUrl);
+      const pathSegments = url.pathname.split("/").filter(Boolean);
+      const lastSegment = pathSegments.pop() ?? "";
+      const summary = await this.blogPort.fetchArticleSummary(
+        blogConfig.name,
+        lastSegment,
+        articleDetail
+      );
       return summary;
     } catch (error) {
       if (error instanceof Error) {

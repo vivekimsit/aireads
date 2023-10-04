@@ -3,6 +3,7 @@ import { dim } from "kolorist";
 import { intro, outro, spinner, select, isCancel } from "@clack/prompts";
 
 import { BlogAdapter } from "./adapters/blogAdapter";
+import { FileStorageAdapter } from "./adapters/fileStorageAdapter";
 import { ConfigAdapter } from "./adapters/configAdapter";
 import { LoggingAdapter } from "./adapters/loggingAdapter";
 import { GPTAdapter } from "./adapters/gPTRuntimeAdapter";
@@ -14,11 +15,13 @@ import { FetchArticleDetailAndSummarizeUseCase } from "./core/useCases/fetchArti
 
 const loggingAdapter = new LoggingAdapter();
 const configAdapter = new ConfigAdapter();
+const storageAdapter = new FileStorageAdapter(process.cwd());
 const gPTRuntimeAdapter = new GPTAdapter(loggingAdapter);
 const blogPort = new BlogAdapter(
   loggingAdapter,
   configAdapter,
-  gPTRuntimeAdapter
+  gPTRuntimeAdapter,
+  storageAdapter
 );
 
 const getBlogListUseCase = new GetBlogListUseCase(blogPort);
