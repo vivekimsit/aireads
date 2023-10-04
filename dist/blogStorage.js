@@ -81,8 +81,6 @@ const getBlogContent = async (blog) => {
         const title = lastSegment;
         const datetime = new Date().toISOString();
         const content = text;
-        console.log(blog.querySelector);
-        console.log(content);
         await (0, exports.saveBlogToFile)(name, title, datetime, content);
         return text;
     }

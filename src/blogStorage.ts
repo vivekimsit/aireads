@@ -68,8 +68,6 @@ export const getBlogContent = async (blog: BlogConfig) => {
     const datetime = new Date().toISOString();
     const content = text;
 
-    console.log(blog.querySelector);
-    console.log(content);
     await saveBlogToFile(name, title, datetime, content);
     return text;
   }

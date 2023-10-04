@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import * as cheerio from "cheerio";
 import fs from "fs/promises";
 import { join } from "path";
@@ -9,6 +9,8 @@ import { ConfigPort } from "../core/ports/configPort";
 import { GPTRuntimePort } from "../core/ports/gPTRuntimePort";
 
 export class BlogAdapter implements BlogPort {
+  private readonly TIMEOUT = 5000; // 5 seconds
+
   constructor(
     private loggingPort: LoggingPort,
     private configPort: ConfigPort,
@@ -19,8 +21,20 @@ export class BlogAdapter implements BlogPort {
     url: string,
     articleListSelector: string
   ): Promise<string[]> {
+    let data;
     try {
-      const { data } = await axios.get(url);
+      const response = await axios.get(url, { timeout: this.TIMEOUT });
+      data = response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.code === "ECONNABORTED") {
+        throw new FetchTimeoutError("The request took too long!");
+      } else {
+        throw new FetchError("There was a problem fetching the articles.");
+      }
+    }
+
+    try {
       const $ = cheerio.load(data);
       const articles: string[] = [];
 
@@ -36,7 +50,7 @@ export class BlogAdapter implements BlogPort {
       if (error instanceof Error) {
         this.loggingPort.error(`Error fetching articles: ${error.message}`);
       }
-      throw error;
+      throw new ParsingError("There was an error processing the fetched data.");
     }
   }
 
@@ -113,3 +127,7 @@ export class BlogAdapter implements BlogPort {
     await fs.writeFile(filePath, fileContent, "utf8");
   }
 }
+
+export class FetchTimeoutError extends Error {}
+export class FetchError extends Error {}
+export class ParsingError extends Error {}

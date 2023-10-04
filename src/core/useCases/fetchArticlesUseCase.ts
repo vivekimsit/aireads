@@ -1,12 +1,13 @@
 import { BlogPort } from "../ports/blogPort";
 import { ConfigPort } from "../ports/configPort";
-import { ILogger } from "../ports/loggingPort";
+import { ILogger as LoggingPort } from "../ports/loggingPort";
+import { FetchTimeoutError, FetchError } from "../../adapters/blogAdapter";
 
 export class FetchArticlesUseCase {
   constructor(
     private blogPort: BlogPort,
     private configPort: ConfigPort,
-    private loggingPort: ILogger
+    private loggingPort: LoggingPort
   ) {}
 
   async execute(blogName: string): Promise<string[]> {
@@ -28,10 +29,22 @@ export class FetchArticlesUseCase {
       );
       return articles;
     } catch (error) {
-      this.loggingPort.error(
-        `Error fetching articles for ${blogName}: ${(error as Error).message}`
-      );
-      throw error;
+      if (error instanceof FetchTimeoutError) {
+        // Handle the timeout, perhaps retrying the request or informing the user.
+        this.loggingPort.error(
+          `Error fetching articles for ${blogName}: ${(error as Error).message}`
+        );
+      } else if (error instanceof FetchError) {
+        // Handle other types of fetch errors.
+        this.loggingPort.error(
+          `Error fetching articles for ${blogName}: ${(error as Error).message}`
+        );
+      } else {
+        this.loggingPort.error(
+          `Error fetching articles for ${blogName}: ${(error as Error).message}`
+        );
+      }
+      return [];
     }
   }
 }

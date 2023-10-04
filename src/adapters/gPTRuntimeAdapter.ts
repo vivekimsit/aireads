@@ -101,7 +101,7 @@ export class GPTAdapter implements GPTRuntimePort {
     article: string;
   }): Promise<any> {
     const config = {
-      model: "gpt-3.5-turbo",
+      model: "gpt-4",
       timeout: 30000,
     };
     return this.createChatCompletion(
