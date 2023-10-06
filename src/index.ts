@@ -51,11 +51,18 @@ const run = async () => {
       return;
     }
 
-    const loadingArticles = spinner();
-    loadingArticles.start(`Loading articles for ${selectedBlogName}`);
-    const articles = await fetchArticlesUseCase.execute(
+    const blogConfig = await fetchBlogConfigUseCase.execute(
       selectedBlogName as string
     );
+
+    if (!blogConfig) {
+      outro(`🛑 couldn't find blog config.`);
+      process.exit(1);
+    }
+
+    const loadingArticles = spinner();
+    loadingArticles.start(`Loading articles for ${selectedBlogName}`);
+    const articles = await fetchArticlesUseCase.execute(blogConfig);
     loadingArticles.stop(`Loading complete`);
     const selectedArticle = await select({
       message: `Pick a blog to read: ${dim("(Ctrl+c to exit)")}`,
@@ -65,14 +72,6 @@ const run = async () => {
     if (isCancel(selectedArticle)) {
       outro("Cancelled");
       return;
-    }
-
-    const blogConfig = await fetchBlogConfigUseCase.execute(
-      selectedBlogName as string
-    );
-    if (!blogConfig) {
-      outro(`🛑 couldn't find blog config.`);
-      process.exit(1);
     }
 
     try {

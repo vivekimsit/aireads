@@ -9,6 +9,8 @@ import { ConfigPort } from "../core/ports/configPort";
 import { GPTRuntimePort } from "../core/ports/gPTRuntimePort";
 import { StoragePort } from "../core/ports/storagePort";
 
+const DEFAULT_MAX_ARTICLES = 5;
+
 export class BlogAdapter implements BlogPort {
   private readonly TIMEOUT = 5000; // 5 seconds
 
@@ -19,10 +21,8 @@ export class BlogAdapter implements BlogPort {
     private storagePort: StoragePort
   ) {}
 
-  async fetchArticles(
-    url: string,
-    articleListSelector: string
-  ): Promise<string[]> {
+  async fetchArticles(blogConfig: BlogConfig): Promise<string[]> {
+    const { url, articleListSelector, maxArticlesToFetch } = blogConfig;
     let data;
     try {
       const response = await axios.get(url, { timeout: this.TIMEOUT });
@@ -38,16 +38,20 @@ export class BlogAdapter implements BlogPort {
 
     try {
       const $ = cheerio.load(data);
-      const articles: string[] = [];
+      const allArticles: string[] = [];
 
       $(articleListSelector).each((i, element) => {
         const link = $(element).find("a").attr("href");
         if (link) {
-          articles.push(link);
+          allArticles.push(link);
         }
       });
 
-      return articles;
+      const limitedArticles = allArticles.slice(
+        0,
+        maxArticlesToFetch || DEFAULT_MAX_ARTICLES
+      );
+      return limitedArticles;
     } catch (error: unknown) {
       if (error instanceof Error) {
         this.loggingPort.error(`Error fetching articles: ${error.message}`);

@@ -37,9 +37,14 @@ const run = async () => {
             (0, prompts_1.outro)("Cancelled");
             return;
         }
+        const blogConfig = await fetchBlogConfigUseCase.execute(selectedBlogName);
+        if (!blogConfig) {
+            (0, prompts_1.outro)(`🛑 couldn't find blog config.`);
+            process.exit(1);
+        }
         const loadingArticles = (0, prompts_1.spinner)();
         loadingArticles.start(`Loading articles for ${selectedBlogName}`);
-        const articles = await fetchArticlesUseCase.execute(selectedBlogName);
+        const articles = await fetchArticlesUseCase.execute(blogConfig);
         loadingArticles.stop(`Loading complete`);
         const selectedArticle = await (0, prompts_1.select)({
             message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
@@ -48,11 +53,6 @@ const run = async () => {
         if ((0, prompts_1.isCancel)(selectedArticle)) {
             (0, prompts_1.outro)("Cancelled");
             return;
-        }
-        const blogConfig = await fetchBlogConfigUseCase.execute(selectedBlogName);
-        if (!blogConfig) {
-            (0, prompts_1.outro)(`🛑 couldn't find blog config.`);
-            process.exit(1);
         }
         try {
             const gptResponseDelay = (0, prompts_1.spinner)();
