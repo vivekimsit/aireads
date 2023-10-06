@@ -25,6 +25,12 @@ export class ConfigAdapter implements ConfigPort {
         articleDetailSelector: "main article .entry__content.s-wysiwyg",
         articleListSelector: ".loop-container.loop-container--grid article",
       },
+      {
+        name: "Fly",
+        url: "https://fly.io/blog/",
+        articleDetailSelector: "main article section",
+        articleListSelector: "main article",
+      },
     ];
   }
 

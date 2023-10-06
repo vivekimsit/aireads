@@ -85,6 +85,7 @@ export class BlogAdapter implements BlogPort {
   ): Promise<string> {
     const name = config.name;
     const url = new URL(articleUrl);
+    this.loggingPort.info(`Fetching article ${url}`);
     const pathSegments = url.pathname.split("/").filter(Boolean);
     const lastSegment = pathSegments.pop() ?? "";
     const filePath = join("blogs", name, `${lastSegment}.md`);
@@ -98,13 +99,17 @@ export class BlogAdapter implements BlogPort {
         this.loggingPort.info(
           "Article not found in local, fetching from remote"
         );
-        const { data } = await axios.get(articleUrl);
+        const { data } = await axios.get(url.href);
         const $ = cheerio.load(data);
         const text = $(config.articleDetailSelector).text().trim();
 
         const title = lastSegment;
         const datetime = new Date().toISOString();
-        await this.saveBlogToFile(name, title, datetime, text);
+        const fileContent = `# ${title}\n\n## ${datetime}\n\n## ${text}`;
+        await this.storagePort.save(
+          ["blogs", name, `${title}.md`],
+          fileContent
+        );
         return text;
       }
     } catch (error) {
@@ -124,17 +129,6 @@ export class BlogAdapter implements BlogPort {
     } catch {
       return false;
     }
-  }
-
-  private async saveBlogToFile(
-    name: string,
-    title: string,
-    datetime: string,
-    content: string
-  ): Promise<void> {
-    const filePath = join("blogs", name, `${title}.md`);
-    const fileContent = `# ${title}\n\n## ${datetime}\n\n## ${content}`;
-    await fs.writeFile(filePath, fileContent, "utf8");
   }
 }
 
