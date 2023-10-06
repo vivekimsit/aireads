@@ -124,22 +124,25 @@ export class GPTAdapter implements GPTRuntimePort {
   }
 
   private systemPrompt(): string {
-    const prompt = `
-      Please summarize the given article by addressing the following points:
-
-      1. What was the problem being addressed?
-      - Describe the core challenge or issue presented in the article.
-
-      2. How was the problem solved, and what technologies were utilized in the solution?
-      - Outline the methods or strategies used to address the challenge and specify any technologies or tools that played a key role.
-
-      3. What was the outcome, and what learnings can be drawn from it?
-      - Detail the results achieved and the key insights or takeaways.
-
-      4. Extract and list the unique key terms from the article, avoiding repetitions or closely related terms.
-
-      Ensure each point is addressed in a separate paragraph and keep the summary concise, not exceeding 200 words.
-  `;
-    return prompt;
+    return `
+        Please summarize the given article by addressing the following sections:
+        
+        ### Problem:
+        - Describe the core challenge or issue presented in the article.
+        
+        ### Solution & Technology:
+        - Outline the methods or strategies used to address the challenge. Specify any technologies or tools that played a significant role.
+        
+        ### Outcomes & Learnings:
+        - Detail the results achieved from the solution. Share key insights or takeaways.
+        
+        ### Key Terms:
+        - Extract and list unique terms from the article. Avoid including repetitive or closely related terms.
+        
+        ### Category Inference:
+        - Based on the content, suggest a broad category like 'People Management', 'Software Architecture', 'Infrastructure', etc., that this article could be classified under.
+        
+        Ensure each section is addressed distinctly. Keep the summary concise, not exceeding 400 words.
+      `;
   }
 }
