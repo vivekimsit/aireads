@@ -25,14 +25,11 @@ const fetchArticleDetailAndSummarizeUseCase = new fetchArticleDetailAndSummarize
 const run = async () => {
     try {
         (0, prompts_1.intro)(" Reader 📖 ");
-        const blogList = await getBlogListUseCase.execute();
-        const selectedBlogName = await (0, prompts_1.select)({
-            message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
-            options: blogList.map((value) => ({
-                label: value.name,
-                value: value.name,
-            })),
-        });
+        const selectedBlogName = await selectBlog();
+        if ((0, prompts_1.isCancel)(selectedBlogName)) {
+            (0, prompts_1.outro)("Cancelled");
+            return;
+        }
         if ((0, prompts_1.isCancel)(selectedBlogName)) {
             (0, prompts_1.outro)("Cancelled");
             return;
@@ -42,33 +39,43 @@ const run = async () => {
             (0, prompts_1.outro)(`🛑 couldn't find blog config.`);
             process.exit(1);
         }
-        const loadingArticles = (0, prompts_1.spinner)();
-        loadingArticles.start(`Loading articles for ${selectedBlogName}`);
-        const articles = await fetchArticlesUseCase.execute(blogConfig);
-        loadingArticles.stop(`Loading complete`);
-        const selectedArticle = await (0, prompts_1.select)({
-            message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
-            options: articles.map((value) => ({ label: value, value })),
-        });
+        const selectedArticle = await fetchAndDisplayArticles(blogConfig);
         if ((0, prompts_1.isCancel)(selectedArticle)) {
             (0, prompts_1.outro)("Cancelled");
             return;
         }
-        try {
-            const gptResponseDelay = (0, prompts_1.spinner)();
-            gptResponseDelay.start("Fetching article summary");
-            const summary = await fetchArticleDetailAndSummarizeUseCase.execute(blogConfig, selectedArticle);
-            console.log(summary);
-            gptResponseDelay.stop("Complete");
-        }
-        catch (error) {
-            (0, prompts_1.outro)(`🛑 ${error.message}`);
-            process.exit(1);
-        }
+        await displaySummary(blogConfig, selectedArticle);
         (0, prompts_1.outro)(`Successfully completed!`);
     }
     catch (error) {
-        console.log(error);
+        (0, prompts_1.outro)(`🛑 Error: ${error.message}`);
     }
 };
 run();
+async function selectBlog() {
+    const blogList = await getBlogListUseCase.execute();
+    return (0, prompts_1.select)({
+        message: `Pick a blog to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
+        options: blogList.map((value) => ({
+            label: value.name,
+            value: value.name,
+        })),
+    });
+}
+async function fetchAndDisplayArticles(blogConfig) {
+    const loadingArticles = (0, prompts_1.spinner)();
+    loadingArticles.start(`Loading articles for ${blogConfig.name}`);
+    const articles = await fetchArticlesUseCase.execute(blogConfig);
+    loadingArticles.stop(`Loading complete`);
+    return (0, prompts_1.select)({
+        message: `Pick an article to read: ${(0, kolorist_1.dim)("(Ctrl+c to exit)")}`,
+        options: articles.map((value) => ({ label: value, value })),
+    });
+}
+async function displaySummary(blogConfig, article) {
+    const gptResponseDelay = (0, prompts_1.spinner)();
+    gptResponseDelay.start("Fetching article summary");
+    const summary = await fetchArticleDetailAndSummarizeUseCase.execute(blogConfig, article);
+    console.log(summary);
+    gptResponseDelay.stop("Complete");
+}
