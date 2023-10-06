@@ -1,13 +1,17 @@
-import fs from "fs/promises";
-import path from "path";
-import os from "os";
-import type { TiktokenModel } from "@dqbd/tiktoken";
+// config.ts
+import { BlogAdapter } from "./adapters/blogAdapter";
+import { FileStorageAdapter } from "./adapters/fileStorageAdapter";
+import { ConfigAdapter } from "./adapters/configAdapter";
+import { LoggingAdapter } from "./adapters/loggingAdapter";
+import { GPTAdapter } from "./adapters/gPTRuntimeAdapter";
 
-export const config = {
-	model: "gpt-3.5-turbo",
-	timeout: 10_0000,
-	hubspot: {
-		url: "https://product.hubspot.com/blog",
-		selector: "hs_cos_wrapper_post_body",
-	},
-};
+export const loggingAdapter = new LoggingAdapter();
+export const configAdapter = new ConfigAdapter();
+export const storageAdapter = new FileStorageAdapter(process.cwd());
+export const gPTRuntimeAdapter = new GPTAdapter(loggingAdapter);
+export const blogPort = new BlogAdapter(
+  loggingAdapter,
+  configAdapter,
+  gPTRuntimeAdapter,
+  storageAdapter
+);

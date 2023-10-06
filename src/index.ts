@@ -2,28 +2,13 @@ import "dotenv/config";
 import { dim } from "kolorist";
 import { intro, outro, spinner, select, isCancel } from "@clack/prompts";
 
-import { BlogAdapter } from "./adapters/blogAdapter";
-import { FileStorageAdapter } from "./adapters/fileStorageAdapter";
-import { ConfigAdapter } from "./adapters/configAdapter";
-import { LoggingAdapter } from "./adapters/loggingAdapter";
-import { GPTAdapter } from "./adapters/gPTRuntimeAdapter";
+import { loggingAdapter, configAdapter, blogPort } from "./config";
 
 import { GetBlogListUseCase } from "./core/useCases/fetchBlogList";
 import { FetchArticlesUseCase } from "./core/useCases/fetchArticlesUseCase";
 import { FetchBlogConfigUseCase } from "./core/useCases/fetchBlogConfigUseCase";
 import { FetchArticleDetailAndSummarizeUseCase } from "./core/useCases/fetchArticleDetailAndSummarizeUseCase";
 import { BlogConfig } from "./core/models/blogConfig";
-
-const loggingAdapter = new LoggingAdapter();
-const configAdapter = new ConfigAdapter();
-const storageAdapter = new FileStorageAdapter(process.cwd());
-const gPTRuntimeAdapter = new GPTAdapter(loggingAdapter);
-const blogPort = new BlogAdapter(
-  loggingAdapter,
-  configAdapter,
-  gPTRuntimeAdapter,
-  storageAdapter
-);
 
 const getBlogListUseCase = new GetBlogListUseCase(blogPort);
 const fetchArticlesUseCase = new FetchArticlesUseCase(
