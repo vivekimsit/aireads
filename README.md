@@ -16,21 +16,23 @@ AIReads uses the power of GPT to fetch and summarize engineering blog articles, 
 ## Getting Started
 
 1. **Clone the repo**:
-   \```
+
+   ```
    git clone https://github.com/vivekimsit/aireads.git
-   \```
+   ```
 
 2. **Install dependencies**:
-   \```
+
+   ```
    npm install
-   \```
+   ```
 
 3. **Set up your environment variables** (refer to `.env.example`).
 
 4. **Run the CLI**:
-   \```
+   ```
    npm run build
-   \```
+   ```
 
 ## Contributing
 
