@@ -15,7 +15,8 @@
     "name": "Slack",
     "url": "https://slack.engineering",
     "articleDetailSelector": "main article .entry__content.s-wysiwyg",
-    "articleListSelector": ".loop-container.loop-container--grid article"
+    "articleListSelector": ".loop-container.loop-container--grid article",
+    "maxArticlesToFetch": 10
   },
   {
     "name": "Fly",
